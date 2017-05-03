@@ -23,6 +23,8 @@ volatile int alarm = 0;
 
 SimpleDHT11 dht11;
 
+
+
 void setup() {
   // declare the ledPin as an OUTPUT:
   pinMode(ledPin, OUTPUT);
@@ -61,16 +63,19 @@ void setup() {
 
 void loop()
 {
+  uint8_t msg[2];
   // read the value from the sensor:
   sensorValue = digitalRead(sensorPin);
   
   Serial.print("sensorValue :");
   Serial.println(sensorValue);
   
+  
 //  Serial.print("Voltage :");
 //  Serial.println(voltage);
   
   if(alarm){
+    alarm = 0;
     digitalWrite(ledPin,HIGH);
     if (dht11.read(pinDHT11, &temperature, &humidity, NULL)) {
       Serial.print("Read DHT11 failed.");
@@ -79,9 +84,10 @@ void loop()
       Serial.print("Sample OK: ");
       Serial.print((int)temperature); Serial.print(" *C, "); 
       Serial.print((int)humidity); Serial.println(" %");
-      String msg = "1";
-      sendString(msg);
-      alarm = 0;
+      //String msg = "1";
+      msg[0] = uint8_t(temperature);
+      msg[1] = uint8_t(humidity);
+      sendMsg(msg, 2);
     } 
     delay(1000);
   }
@@ -92,7 +98,11 @@ void loop()
   
 }
 
-void sendString(String str) {
+void sendMsg(uint8_t msg[], int size) {
+  int i=0;
+  for(i=0;i<size;i++){
+     Serial.println(msg[i]);
+  }
   // Start the module
   SigFox.begin();
   // Wait at least 30mS after first configuration (100mS before)
@@ -102,7 +112,10 @@ void sendString(String str) {
   delay(1);
 
   SigFox.beginPacket();
-  SigFox.print(str);
+  for(i=0;i<size;i++){
+     SigFox.write(msg[i]);
+  }
+ 
 
   int ret = SigFox.endPacket();  // send buffer to SIGFOX network
   if (ret > 0) {
