@@ -1,14 +1,14 @@
-# Sigfox Flame Detector
+# Sigfox Forest Fire Detector
 
 ## Introduction
 
-How to prevent forest from burning? A small Sigfox signal can prevent this natural disaster. In this project, we will use an Arduino MKRFOX1200, a flame detector, a temperature and humidity sensors and we will send the data the TheThings.io platform.
+How to prevent forest from burning? A small Sigfox signal can prevent this natural disaster. In this project, we will use an Arduino MKRFOX1200, a flame detector, a temperature and humidity sensors.
 
 I chose to put all the integrated electronic inside a small bird house, feel free to adapt the support!
 
 Here it is what the first prototype looked like.
 
-If you want to go further, you can add a solar panel with a charging circuit to charge a small battery, this part will not be covered by this tutorial. Feel free to submit a pull request on the [Github page](https://github.com/luisomoreau/SigfoxFlameDetector)
+If you want to go further, you can add a solar panel with a charging circuit to charge a small battery, this part will may be covered by this tutorial in the near futur. Feel free to submit a pull request on the [Github page](https://github.com/luisomoreau/SigfoxForestFireDetector) if you have some ideas.
 
 ![picture1](img/picture1.jpg)
 
@@ -19,6 +19,8 @@ If you want to go further, you can add a solar panel with a charging circuit to 
 * One [Arduino MKRFOX1200](https://www.arduino.cc/en/Main.ArduinoBoardMKRFox1200)
 * One [flame detector](https://www.amazon.fr/Waveshare-Flame-Sensor-Detection-Raspberry/dp/B00NL5JEPS) or alternatively an IR led between 980nm and 1100 nm.
 * A DHT11 temperature and humidity sensor.
+
+![Materials](img/materials.jpeg)
 
 ## How to detect a fire using infrared sensors
 
@@ -313,6 +315,8 @@ To see the decoding data, edit your device type information (on the information 
 And add the following parser:
 - Payload parsing: Custom grammar
 - Custom configuration: ```temperature::uint:8 humidity::uint:8 alert::bool:0```
+
+Additionally, you can configure the downlink data in hexa: ```3c06000000000000``` to set the uplink frequency to 60 minutes (0x3c) and ask for a downlink message every 6 uplink messages (0x06). Note that a downlink payload has to be 8 bytes long.
 
 ![Edit device type info](img/edit-device-type.png)
 

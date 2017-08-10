@@ -14,13 +14,13 @@
 
 #define MINUTESINMILLISECONDS 60 * 1000
 
-int sensorPin = 0;    // Attach the IR led to pin D0
-int ledPin = 2;      // select the pin for the LED
+int sensorPin = 1;    // Attach the IR led to pin D0
+int ledPin = 3;      // select the pin for the LED
 int pinDHT11 = 5;
 int sensorValue = 0;  // variable to store the value coming from the sensor
-int sleepTime = 1; // In minutes
-int downlinkFrequency = 5; //Meaning requesting a downlink message every X uplinks
-int countUplinks = 5;
+int sleepTime = 60; // In minutes
+int downlinkFrequency = 6; //Meaning requesting a downlink message every X uplinks
+int countUplinks = 6;
 float voltage = 0;
 byte temperature = 0;
 byte humidity = 0;
@@ -35,6 +35,7 @@ SimpleDHT11 dht11;
 void setup() {
   // declare the ledPin as an OUTPUT:
   pinMode(ledPin, OUTPUT);
+  delay(5000);
 
   Serial.begin(9600);
   while (!Serial) {};
@@ -116,12 +117,14 @@ void loop()
 }
 
 void sendMsg(uint8_t msg[], int size) {
-  uint8_t dlPayload[2];
+  uint8_t dlPayload[8];
   char output;
   bool askDL = false;
   
   //change the downlink request flag
   countUplinks++;
+  Serial.print("Counter: ");
+  Serial.println(countUplinks);
   if(countUplinks>=downlinkFrequency){
     countUplinks = 0;
     askDL = true;
@@ -171,6 +174,7 @@ void sendMsg(uint8_t msg[], int size) {
         Serial.print("0x");
         Serial.println(output, HEX);
       }
+      changeConfiguration(dlPayload);
     } else {
       Serial.println("Could not get any response from the server");
       Serial.println("Check the SigFox coverage in your area");
@@ -182,7 +186,7 @@ void sendMsg(uint8_t msg[], int size) {
       Serial.print(dlPayload[k], HEX);
     }
     Serial.println();
-    changeConfiguration(dlPayload);
+    
   }
 
   SigFox.end();
