@@ -2,7 +2,7 @@
  * Author: Louis Moreau
  * Date: 2nd May 2017
  * Description: Arduino sktech for the MKRFOX1200 to detect flame using IR sensor.
- * This code will wake the arduino up and read the temperature if a flame is detected 
+ * This code will wake the arduino up and read the temperature if a flame is detected
  * and then send this temparature using Sigfox network.
  * This code is in the Public Domain. Feel free to reuse it as you want.
  */
@@ -11,15 +11,15 @@
 #include <ArduinoLowPower.h>
 #include <SimpleDHT.h>
 
-int sensorPin = 0;    // Attach the IR led to pin A1
-int ledPin = 5;      // select the pin for the LED
-int pinDHT11 = 2;
+int sensorPin = 0;    // Attach the IR led to pin D0
+int ledPin = 2;      // select the pin for the LED
+int pinDHT11 = 5;
 int sensorValue = 0;  // variable to store the value coming from the sensor
 float voltage = 0;
 byte temperature = 0;
 byte humidity = 0;
 
-volatile int alarm = 0;
+volatile int alarm = 1;
 
 SimpleDHT11 dht11;
 
@@ -28,7 +28,7 @@ SimpleDHT11 dht11;
 void setup() {
   // declare the ledPin as an OUTPUT:
   pinMode(ledPin, OUTPUT);
-  
+
   Serial.begin(9600);
   while (!Serial) {};
 
@@ -59,6 +59,7 @@ void setup() {
   // attach pin 0 and 1 to a switch and enable the interrupt on voltage falling event
   pinMode(0, INPUT);
   LowPower.attachInterruptWakeup(0, alarmEvent, RISING);
+  LowPower.sleep();
 }
 
 void loop()
@@ -66,36 +67,40 @@ void loop()
   uint8_t msg[2];
   // read the value from the sensor:
   sensorValue = digitalRead(sensorPin);
-  
+
   Serial.print("sensorValue :");
   Serial.println(sensorValue);
-  
-  
+
+
 //  Serial.print("Voltage :");
 //  Serial.println(voltage);
-  
+
   if(alarm){
-    alarm = 0;
+    
     digitalWrite(ledPin,HIGH);
     if (dht11.read(pinDHT11, &temperature, &humidity, NULL)) {
       Serial.print("Read DHT11 failed.");
     }else{
       Serial.println();
       Serial.print("Sample OK: ");
-      Serial.print((int)temperature); Serial.print(" *C, "); 
+      Serial.print((int)temperature); Serial.print(" *C, ");
       Serial.print((int)humidity); Serial.println(" %");
       //String msg = "1";
       msg[0] = uint8_t(temperature);
       msg[1] = uint8_t(humidity);
-      sendMsg(msg, 2);
-    } 
-    delay(1000);
+      msg[2] = uint8_t(0x01);
+      sendMsg(msg, 3);
+    }
+    
+    //delay(1000);
   }
-  
+  alarm = 0;
+
   delay(100);
   digitalWrite(ledPin, LOW);
+  Serial.print("Back to sleep: ");
   LowPower.sleep();
-  
+
 }
 
 void sendMsg(uint8_t msg[], int size) {
@@ -110,18 +115,22 @@ void sendMsg(uint8_t msg[], int size) {
   // Clears all pending interrupts
   SigFox.status();
   delay(1);
-
-  SigFox.beginPacket();
+  
+  int flag = SigFox.beginPacket();
+  Serial.print("flag : ");
+  Serial.println(flag);
   for(i=0;i<size;i++){
      SigFox.write(msg[i]);
   }
- 
+
 
   int ret = SigFox.endPacket();  // send buffer to SIGFOX network
   if (ret > 0) {
-    Serial.println("No transmission");
+    Serial.print("No transmission: ");
+    Serial.println(ret);
   } else {
-    Serial.println("Transmission ok");
+    Serial.print("Transmission ok: ");
+    Serial.println(ret);
   }
 
   Serial.println(SigFox.status(SIGFOX));
