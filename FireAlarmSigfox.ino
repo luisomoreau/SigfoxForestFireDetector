@@ -19,7 +19,7 @@ float voltage = 0;
 byte temperature = 0;
 byte humidity = 0;
 
-volatile int alarm = 1;
+volatile int alarm = 0;
 
 SimpleDHT11 dht11;
 
@@ -41,7 +41,7 @@ void setup() {
   String ID = SigFox.ID();
   String PAC = SigFox.PAC();
 
-  // Display module informations
+  // Display module information
   Serial.println("SigFox FW version " + version);
   Serial.println("ID  = " + ID);
   Serial.println("PAC = " + PAC);
@@ -116,9 +116,8 @@ void sendMsg(uint8_t msg[], int size) {
   SigFox.status();
   delay(1);
   
-  int flag = SigFox.beginPacket();
-  Serial.print("flag : ");
-  Serial.println(flag);
+  SigFox.beginPacket();
+
   for(i=0;i<size;i++){
      SigFox.write(msg[i]);
   }
