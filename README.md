@@ -10,9 +10,9 @@ Here it is what the first prototype looked like.
 
 If you want to go further, you can add a solar panel with a charging circuit to charge a small battery, this part will may be covered by this tutorial in the near futur. Feel free to submit a pull request on the [Github page](https://github.com/luisomoreau/SigfoxForestFireDetector) if you have some ideas.
 
-![picture1](img/picture1.jpg)
+![picture1](img/front-view-arduino.jpeg)
 
-![picture2](img/picture2.jpg)
+![picture2](img/bottom-view.jpeg)
 
 ## What you need
 
@@ -324,6 +324,8 @@ Additionally, you can configure the downlink data in hexa: ```3c06000000000000``
 ## Casing
 
 Now it is time to build the small box to make it sexier.
+
+[![Youtube](https://img.youtube.com/vi/bhYxnaK9PQE/0.jpg)](https://www.youtube.com/watch?v=bhYxnaK9PQE)
 
 First of all, I bought this small bird house for less than 10€:
 [Bird house Amazon link](https://www.amazon.fr/Beleduc-40755-Loisirs-Cr%C3%A9atifs-Nichoir/dp/B001CL6U5K/ref=sr_1_1?ie=UTF8&qid=1502360014&sr=8-1&keywords=cabane+a+oiseau).
