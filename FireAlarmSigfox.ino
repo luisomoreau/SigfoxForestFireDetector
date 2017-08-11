@@ -13,6 +13,7 @@
 #include <SimpleDHT.h>
 
 #define MINUTESINMILLISECONDS 60 * 1000
+#define DEBUG 0
 
 int sensorPin = 1;    // Attach the IR led to pin D0
 int ledPin = 3;      // select the pin for the LED
@@ -37,8 +38,11 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   delay(5000);
 
-  Serial.begin(9600);
-  while (!Serial) {};
+  if(DEBUG){
+    Serial.begin(9600);
+    while (!Serial) {};
+  }
+  
 
   if (!SigFox.begin()) {
     Serial.println("Shield error or not present!");
@@ -51,14 +55,16 @@ void setup() {
   String PAC = SigFox.PAC();
 
   // Display module information
-  Serial.println("SigFox FW version " + version);
-  Serial.println("ID  = " + ID);
-  Serial.println("PAC = " + PAC);
+  if(DEBUG){
+    Serial.println("SigFox FW version " + version);
+    Serial.println("ID  = " + ID);
+    Serial.println("PAC = " + PAC); 
+    Serial.println("");
+    Serial.print("Module temperature: ");
+    Serial.println(SigFox.internalTemperature());
+  }
+  
 
-  Serial.println("");
-
-  Serial.print("Module temperature: ");
-  Serial.println(SigFox.internalTemperature());
 
   delay(100);
 
@@ -78,10 +84,11 @@ void loop()
   // read the value from the sensor:
   sensorValue = digitalRead(sensorPin);
 
-  Serial.print("sensorValue :");
-  Serial.println(sensorValue);
-
-
+  if(DEBUG){
+    Serial.print("sensorValue :");
+    Serial.println(sensorValue);
+  }
+  
   //  Serial.print("Voltage :");
   //  Serial.println(voltage);
 
@@ -91,10 +98,13 @@ void loop()
     if (dht11.read(pinDHT11, &temperature, &humidity, NULL)) {
       Serial.print("Read DHT11 failed.");
     }else{
-      Serial.println();
-      Serial.print("Sample OK: ");
-      Serial.print((int)temperature); Serial.print(" ºC, ");
-      Serial.print((int)humidity); Serial.println(" %");
+      if(DEBUG){
+        Serial.println();
+        Serial.print("Sample OK: ");
+        Serial.print((int)temperature); Serial.print(" ºC, ");
+        Serial.print((int)humidity); Serial.println(" %");
+      }
+      
       //String msg = "1";
       msg[0] = uint8_t(temperature);
       msg[1] = uint8_t(humidity);
@@ -108,7 +118,10 @@ void loop()
   
   delay(100);
   digitalWrite(ledPin, LOW);
-  Serial.print("Back to sleep: ");
+  if(DEBUG){
+    Serial.print("Back to sleep: ");
+  }
+  
   
   aliveFlag = 0;
   alarmFlag = 0;
@@ -123,8 +136,11 @@ void sendMsg(uint8_t msg[], int size) {
   
   //change the downlink request flag
   countUplinks++;
-  Serial.print("Counter: ");
-  Serial.println(countUplinks);
+  if(DEBUG){
+    Serial.print("Counter: ");
+    Serial.println(countUplinks);
+  }
+  
   if(countUplinks>=downlinkFrequency){
     countUplinks = 0;
     askDL = true;
@@ -132,9 +148,12 @@ void sendMsg(uint8_t msg[], int size) {
 
   //Show payload in console
   int i=0;
-  for(i=0;i<size;i++){
-     Serial.println(msg[i]);
+  if(DEBUG){
+    for(i=0;i<size;i++){
+      Serial.println(msg[i]);
+    }
   }
+  
   
   // Start the module
   SigFox.begin();
@@ -153,40 +172,50 @@ void sendMsg(uint8_t msg[], int size) {
   
 
   int ret = SigFox.endPacket(askDL);  // send buffer to SIGFOX network
-  if (ret > 0) {
-    Serial.println("No transmission");
-  } else {
-    Serial.println("Transmission ok");
+  
+  if(DEBUG){
+    if (ret > 0) {
+      Serial.println("No transmission");
+    } else {
+      Serial.println("Transmission ok");
+    }
+    Serial.println(SigFox.status(SIGFOX));
+    Serial.println(SigFox.status(ATMEL));
   }
-
-  Serial.println(SigFox.status(SIGFOX));
-  Serial.println(SigFox.status(ATMEL));
+  
 
   if(askDL){
     askDL = false;
     int j=0;
     if (SigFox.parsePacket()) {
-      Serial.println("Response from server:");
+      
+      if(DEBUG){Serial.println("Response from server:");}
       while (SigFox.available()) {
         output = SigFox.read();
         dlPayload[j] = output;
-        j++;  
-        Serial.print("0x");
-        Serial.println(output, HEX);
+        j++;
+        if(DEBUG){
+          Serial.print("0x");
+          Serial.println(output, HEX);
+        }  
+        
       }
       changeConfiguration(dlPayload);
     } else {
-      Serial.println("Could not get any response from the server");
-      Serial.println("Check the SigFox coverage in your area");
-      Serial.println("If you are indoor, check the 20dB coverage or move near a window");
+      if(DEBUG){
+        Serial.println("Could not get any response from the server");
+        Serial.println("Check the SigFox coverage in your area");
+        Serial.println("If you are indoor, check the 20dB coverage or move near a window");
+      }
     }
-    Serial.print("downlink payload: ");
-    int k=0;
-    for(k=0;k<8;k++){
-      Serial.print(dlPayload[k], HEX);
+    if(DEBUG){
+      Serial.print("downlink payload: ");
+      int k=0;
+      for(k=0;k<8;k++){
+        Serial.print(dlPayload[k], HEX);
+      }
+      Serial.println();
     }
-    Serial.println();
-    
   }
 
   SigFox.end();
@@ -195,14 +224,19 @@ void sendMsg(uint8_t msg[], int size) {
 void changeConfiguration(uint8_t dlPayload[]) {
   if(dlPayload[0]!=0){
     sleepTime = dlPayload[0]; // In minutes
-  Serial.print("Sleep time configuration changed: ");
-  Serial.print(sleepTime);
-  Serial.println(" minutes.");
+    if(DEBUG){
+      Serial.print("Sleep time configuration changed: ");
+      Serial.print(sleepTime);
+      Serial.println(" minutes.");
+    }
   }
+  
   if(dlPayload[1]!=0){
     downlinkFrequency = dlPayload[1]; //Meaning requesting a downlink message every X uplinks
-    Serial.print("Downlink frequency configuration changed: ");
-    Serial.println(downlinkFrequency);
+    if(DEBUG){
+      Serial.print("Downlink frequency configuration changed: ");
+      Serial.println(downlinkFrequency);
+    }
   }
   
 } 
