@@ -21,8 +21,8 @@ int pinDHT11 = 5;
 int sensorValue = 0;  // variable to store the value coming from the sensor
 int sleepTime = 60; // In minutes
 int downlinkFrequency = 6; //Meaning requesting a downlink message every X uplinks
-int countUplinks = 6;
-float voltage = 0;
+int countUplinks = 0;
+int voltage = 0;
 byte temperature = 0;
 byte humidity = 0;
 
@@ -80,17 +80,18 @@ void setup() {
 
 void loop()
 {
-  uint8_t msg[2];
+  uint8_t msg[3];
   // read the value from the sensor:
   sensorValue = digitalRead(sensorPin);
+  voltage = analogRead(ADC_BATTERY);
+  voltage = map(voltage, 0, 1023, 0, 100);
 
   if(DEBUG){
     Serial.print("sensorValue :");
     Serial.println(sensorValue);
+    Serial.print("Voltage :");
+    Serial.println(voltage);
   }
-  
-  //  Serial.print("Voltage :");
-  //  Serial.println(voltage);
 
   if(alarmFlag || aliveFlag){
     
@@ -108,8 +109,10 @@ void loop()
       //String msg = "1";
       msg[0] = uint8_t(temperature);
       msg[1] = uint8_t(humidity);
-      msg[2] = uint8_t(alarmFlag);
-      sendMsg(msg, 3);
+      msg[2] = uint8_t(voltage);
+      msg[3] = uint8_t(alarmFlag);
+      
+      sendMsg(msg, 4);
     }
     
     //delay(1000);
